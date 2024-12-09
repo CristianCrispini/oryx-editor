@@ -39,7 +39,7 @@ class StreamReadThread extends Thread {
 	    if (AutoLayouterServlet.DEBUG) {
 		System.out.println("Auto-Layouter: Reader Thread yields");
 	    }
-	    yield();
+	    Thread.yield();
 	    if (AutoLayouterServlet.DEBUG) {
 		System.out
 			.println("Auto-Layouter: Reader Thread starts reading");

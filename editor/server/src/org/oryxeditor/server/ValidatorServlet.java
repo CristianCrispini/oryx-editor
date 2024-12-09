@@ -148,7 +148,7 @@ public class ValidatorServlet extends HttpServlet {
 			JSONArray goodInitialMarkings = new JSONArray();
 			for(Marking marking: soundChecker.goodInitialMarkings){
 				JSONArray goodInitialMarking = new JSONArray();
-				for(IControlFlow cf : marking.filterByState(epc.getControlFlow(), Marking.State.POS_TOKEN)){
+				for(IControlFlow cf : (List<IControlFlow>) marking.filterByState(epc.getControlFlow(), Marking.State.POS_TOKEN)){
 					JSONObject nodeObject = new JSONObject();
 					nodeObject.put("id", cf.getId());
 					goodInitialMarking.put(nodeObject);
@@ -160,7 +160,7 @@ public class ValidatorServlet extends HttpServlet {
 			JSONArray goodFinalMarkings = new JSONArray();
 			for(Marking marking: soundChecker.goodFinalMarkings){
 				JSONArray goodFinalMarking = new JSONArray();
-				for(IControlFlow cf : marking.filterByState(epc.getControlFlow(), Marking.State.POS_TOKEN)){
+				for(IControlFlow cf : (List<IControlFlow>) marking.filterByState(epc.getControlFlow(), Marking.State.POS_TOKEN)){
 					JSONObject nodeObject = new JSONObject();
 					nodeObject.put("id", cf.getId());
 					goodFinalMarking.put(nodeObject);

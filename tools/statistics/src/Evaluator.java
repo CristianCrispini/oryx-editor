@@ -17,171 +17,180 @@ import org.oryxeditor.server.diagram.Shape;
 import org.springframework.util.FileCopyUtils;
 
 /**
+ * The {@code Evaluator} class processes JSON files representing diagrams.
+ * It performs various evaluations on the diagrams, such as counting specific
+ * stencil types and generating a CSV output summarizing the results.
  * 
- */
-
-/**
+ * This class identifies and analyzes BPMN diagrams based on the stencil set URL,
+ * performs validations, and tracks occurrences of specific properties within the diagrams.
+ * 
+ * The main functionality includes filtering input files, parsing JSON diagrams,
+ * collecting statistics, and writing the results to an output file.
+ * 
  * @author Philipp
- *
+ * @version 1.0
  */
 public class Evaluator {
-	static class JSONFilter implements FilenameFilter {
-	    public boolean accept(File dir, String name) {
-	        return (name.endsWith(".json"));
-	    }
-	}
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		int count=0;
-		StringBuilder invalid= new StringBuilder();
-		if (args.length != 1) {
-			System.err.println("Wrong Number of Arguments!");
-			System.err.println(usage());
-			return;
-		}
-		String jsonDirPath = args[0];
-		File dir = new File(jsonDirPath);
-		System.out.println(jsonDirPath);
-		File[] files=dir.listFiles(new JSONFilter());
-		List<Diagram> diagrams=new ArrayList<Diagram>();
-		HashSet<String> sets=new HashSet<String>();
-		HashMap<String, String> lines=new HashMap<String, String>();
 
-		for(File f:files){
-			try {
-				String str=FileCopyUtils.copyToString(new FileReader(f) );
-				str=str.replace("\"target\":{},", "");
-				Diagram d = DiagramBuilder.parseJson(str);
-				String set=d.getStencilset().getUrl();
-				if(!set.contains("bpmn1.1.json") && !set.contains("bpmn.json"))
-					continue;
-				HashMap<String, Integer> counter=new HashMap<String, Integer>();
-				countDiagram(d, counter);
-				String models=lines.get("");
-				// add for each new property empty cells for each old model
-				int modelCount=0;
-				if(models!=null)
-					modelCount=models.split(";").length;
-				Set<String>keys=new HashSet<String>(counter.keySet());
-				keys.removeAll(lines.keySet());
-				for(String key:keys){
-					for(int i=0;i<modelCount;i++){
-						addOrAppend(lines,key, "");
-						}
-				}
-				// add for each unused property a empty cell
-				Set<String>oldKeys=new HashSet<String>(lines.keySet());
-				oldKeys.removeAll(counter.keySet());
-				for(String key:oldKeys){
-					if(key.equals(""))
-						continue;
-					addOrAppend(lines,key, "");
-				}
-				addOrAppend(lines, "", f.getName());
-				for(Entry<String, Integer> entry:counter.entrySet()){
-					addOrAppend(lines, entry.getKey(), entry.getValue()+"");
-				}
-				for(String line:lines.values()){
-					assert(line.split(";").length==modelCount);
-				}
+    /**
+     * A {@code FilenameFilter} implementation to filter JSON files.
+     */
+    static class JSONFilter implements FilenameFilter {
+        /**
+         * Determines if a given file should be accepted based on its name.
+         *
+         * @param dir  the directory in which the file was found
+         * @param name the name of the file
+         * @return {@code true} if the file ends with ".json"; {@code false} otherwise
+         */
+        public boolean accept(File dir, String name) {
+            return (name.endsWith(".json"));
+        }
+    }
 
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			
-				invalid.append(f.getName()+"\n");
-				count++;
-			} 
-		}
-		for(String s:sets)System.out.println(s);
-		System.out.println(count+"\n");
-		System.out.println(invalid);
-		
-		List<String> entries=new ArrayList<String>();
-		entries.addAll(lines.keySet());
-		Collections.sort(entries);
-		StringBuilder file=new StringBuilder();
-		for(String entry:entries){
-			file.append(entry+";"+lines.get(entry)+"\n");
-		}
-		try {
-			FileWriter writer= new FileWriter(jsonDirPath+File.separator+"output.csv");
-			writer.write(file.toString());
-			writer.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();}
+    /**
+     * Main entry point for the application. Processes JSON files in a given directory,
+     * analyzes their content, and outputs a summary to a CSV file.
+     *
+     * @param args command-line arguments; expects exactly one argument specifying the directory path
+     */
+    public static void main(String[] args) {
+        int count = 0;
+        StringBuilder invalid = new StringBuilder();
+        if (args.length != 1) {
+            System.err.println("Wrong Number of Arguments!");
+            System.err.println(usage());
+            return;
+        }
+        String jsonDirPath = args[0];
+        File dir = new File(jsonDirPath);
+        System.out.println(jsonDirPath);
+        File[] files = dir.listFiles(new JSONFilter());
+        List<Diagram> diagrams = new ArrayList<>();
+        HashSet<String> sets = new HashSet<>();
+        HashMap<String, String> lines = new HashMap<>();
 
-	}
-	/**
-	 * @param d
-	 * @param counter
-	 */
-	private static void countDiagram(Diagram d, HashMap<String, Integer> counter) {
-		for(Shape shape:d.getShapes()){
-			if(shape.getStencilId()==null)
-				continue;
-			if(shape.getStencilId().equals("Task")){
-				int i=0;
-				for(Shape income:shape.getIncomings()){
-					if(income.getStencilId()!= null && income.getStencilId().equals("SequenceFlow"))
-						i++;
-				}
-				if(i>1)
-					addOrIncrement(counter, "implicit XOR-join");
-				int x=0;
-				for(Shape income:shape.getOutgoings()){
-					if(income.getStencilId()!= null && income.getStencilId().equals("SequenceFlow"))
-						x++;
-				}
-				if(x>1)
-					addOrIncrement(counter, "implicit AND-split");
-				
-				if(shape.getProperty("looptype")!=null && shape.getProperty("looptype").equalsIgnoreCase("Standard")){
-					addOrIncrement(counter, "Activity Looping");
-					continue;
-				};
-				if(shape.getProperty("looptype")!=null && shape.getProperty("looptype").equalsIgnoreCase("MultiInstance")){
-					addOrIncrement(counter, "Multiple Instance");
-					continue;
-				};
-				if(shape.getProperty("iscompensation")!=null && shape.getProperty("iscompensation").equals("true")){
-					addOrIncrement(counter, "Compensation");
-					continue;
-				};
-				
-			}
-				
-			String id = shape.getStencilId();
-			addOrIncrement(counter, id);
-		}
-		
-	}
-	/**
-	 * @param counter
-	 * @param id
-	 */
-	private static void addOrIncrement(HashMap<String, Integer> counter,
-			String id) {
-		if(counter.containsKey(id)){
-			int x=counter.get(id);
-			counter.put(id, ++x);
-		}else{
-			counter.put(id, 1);
-		}
-	}
-	private static void addOrAppend(HashMap<String, String> counter,
-			String id, String entry) {
-		if(counter.containsKey(id)){
-			String x=counter.get(id);
-			counter.put(id, x+";"+entry);
-		}else{
-			counter.put(id, entry);
-		}
-	}
-	private static String usage(){
-		return "no idea, you are wrong";
-	}
+        for (File f : files) {
+            try {
+                String str = FileCopyUtils.copyToString(new FileReader(f));
+                str = str.replace("\"target\":{},", "");
+                Diagram d = DiagramBuilder.parseJson(str);
+                String set = d.getStencilset().getUrl();
+                if (!set.contains("bpmn1.1.json") && !set.contains("bpmn.json"))
+                    continue;
+                HashMap<String, Integer> counter = new HashMap<>();
+                countDiagram(d, counter);
+
+                String models = lines.get("");
+                int modelCount = (models != null) ? models.split(";").length : 0;
+                Set<String> keys = new HashSet<>(counter.keySet());
+                keys.removeAll(lines.keySet());
+                for (String key : keys) {
+                    for (int i = 0; i < modelCount; i++) {
+                        addOrAppend(lines, key, "");
+                    }
+                }
+                Set<String> oldKeys = new HashSet<>(lines.keySet());
+                oldKeys.removeAll(counter.keySet());
+                for (String key : oldKeys) {
+                    if (key.equals("")) continue;
+                    addOrAppend(lines, key, "");
+                }
+                addOrAppend(lines, "", f.getName());
+                for (Entry<String, Integer> entry : counter.entrySet()) {
+                    addOrAppend(lines, entry.getKey(), entry.getValue() + "");
+                }
+                for (String line : lines.values()) {
+                    assert (line.split(";").length == modelCount);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                invalid.append(f.getName()).append("\n");
+                count++;
+            }
+        }
+        for (String s : sets) System.out.println(s);
+        System.out.println(count + "\n");
+        System.out.println(invalid);
+
+        List<String> entries = new ArrayList<>(lines.keySet());
+        Collections.sort(entries);
+        StringBuilder file = new StringBuilder();
+        for (String entry : entries) {
+            file.append(entry).append(";").append(lines.get(entry)).append("\n");
+        }
+        try {
+            FileWriter writer = new FileWriter(jsonDirPath + File.separator + "output.csv");
+            writer.write(file.toString());
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Analyzes a diagram to count occurrences of specific stencil types and properties.
+     *
+     * @param d       the diagram to analyze
+     * @param counter a map to track the counts of stencil types and properties
+     */
+    private static void countDiagram(Diagram d, HashMap<String, Integer> counter) {
+        for (Shape shape : d.getShapes()) {
+            if (shape.getStencilId() == null) continue;
+
+            if (shape.getStencilId().equals("Task")) {
+                int i = 0;
+                for (Shape income : shape.getIncomings()) {
+                    if (income.getStencilId() != null && income.getStencilId().equals("SequenceFlow")) i++;
+                }
+                if (i > 1) addOrIncrement(counter, "implicit XOR-join");
+
+                int x = 0;
+                for (Shape income : shape.getOutgoings()) {
+                    if (income.getStencilId() != null && income.getStencilId().equals("SequenceFlow")) x++;
+                }
+                if (x > 1) addOrIncrement(counter, "implicit AND-split");
+
+                if ("Standard".equalsIgnoreCase(shape.getProperty("looptype"))) {
+                    addOrIncrement(counter, "Activity Looping");
+                } else if ("MultiInstance".equalsIgnoreCase(shape.getProperty("looptype"))) {
+                    addOrIncrement(counter, "Multiple Instance");
+                } else if ("true".equals(shape.getProperty("iscompensation"))) {
+                    addOrIncrement(counter, "Compensation");
+                }
+            }
+
+            addOrIncrement(counter, shape.getStencilId());
+        }
+    }
+
+    /**
+     * Increments the count for a given stencil type in the counter map or initializes it if not present.
+     *
+     * @param counter the map storing counts of stencil types
+     * @param id      the stencil type to increment
+     */
+    private static void addOrIncrement(HashMap<String, Integer> counter, String id) {
+        counter.put(id, counter.getOrDefault(id, 0) + 1);
+    }
+
+    /**
+     * Appends a value to an existing entry in the counter map, or initializes it if not present.
+     *
+     * @param counter the map storing stencil properties and their values
+     * @param id      the stencil property key
+     * @param entry   the value to append
+     */
+    private static void addOrAppend(HashMap<String, String> counter, String id, String entry) {
+        counter.put(id, counter.getOrDefault(id, "") + ";" + entry);
+    }
+
+    /**
+     * Provides usage instructions for the program.
+     *
+     * @return a usage message
+     */
+    private static String usage() {
+        return "Usage: java Evaluator <directory_path>";
+    }
 }
