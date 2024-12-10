@@ -38,7 +38,7 @@ RUN mkdir -p /var/lib/postgresql/data && \
 # Add SQL initialization scripts
 RUN echo "CREATE USER poem WITH SUPERUSER;" > /docker-entrypoint-initdb.d/1_init.sql && \
     echo "CREATE DATABASE poem OWNER poem;" >> /docker-entrypoint-initdb.d/1_init.sql && \
-    echo "CREATE PROCEDURAL LANGUAGE plpythonu;" > /docker-entrypoint-initdb.d/2_pllang.sql \
+    echo "CREATE PROCEDURAL LANGUAGE plpythonu;" > /docker-entrypoint-initdb.d/2_pllang.sql &&\
     echo "CREATE PROCEDURAL LANGUAGE plpgsql;" > /docker-entrypoint-initdb.d/2_pllang.sql
 
     
