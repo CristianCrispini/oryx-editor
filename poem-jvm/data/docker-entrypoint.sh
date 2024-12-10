@@ -16,13 +16,21 @@ if [ ! -s "$DATADIR/PG_VERSION" ]; then
     echo "Starting PostgreSQL server for initialization..."
     pg_ctl -D "$DATADIR" -o "-c listen_addresses=''" -w start
 
-    echo "Running initialization scripts..."
-    for file in /docker-entrypoint-initdb.d/*; do
+    # Process numbered files by incrementing index
+    index=0
+    while true; do
+        file=$(find /docker-entrypoint-initdb.d -type f -name "${index}_*.sql" -o -name "${index}_*.sh" | head -n 1)
+        if [[ -z "$file" ]]; then
+            break  # Exit loop if no file matches the current index
+        fi
+
         case "$file" in
-            *.sql)    echo "Executing $file"; psql -U postgres -f "$file";;
-            *.sh)     echo "Running $file"; bash "$file";;
-            *)        echo "Ignoring $file";;
+            *.sql) echo "Executing $file"; psql -U postgres -f "$file";;
+            *.sh)  echo "Running $file"; bash "$file";;
+            *)     echo "Ignoring $file";;
         esac
+
+        index=$((index + 1))
     done
 
     # Stop PostgreSQL after initialization
