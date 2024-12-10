@@ -1305,7 +1305,7 @@ CREATE INDEX object_idx ON interaction USING btree (object);
 -- Name: poem_position; Type: INDEX; Schema: public; Owner: poem; Tablespace: 
 --
 
-CREATE INDEX poem_position ON structure USING btree (parent(hierarchy), child_position(hierarchy));
+CREATE INDEX poem_position ON structure USING btree (public.parent(hierarchy), child_position(hierarchy));
 
 
 --
