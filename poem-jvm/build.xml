@@ -75,7 +75,7 @@
         </concat>
 	</target>
 	
-	<target name="dist" depends="compile-backend, compress-repository-javascript, generate-version-file-backend" >
+	<target name="dist" depends="compile-backend, compress-repository-javascript" >
 		<!-- Add Hibernate xml files to the binary classes dir -->
 		<copy file="${config-dir}/hibernate.cfg.xml" todir="${bin-dir}" />
 		<copy file="${data-dir}/Access.hbm.xml" todir="${bin-dir}" />
@@ -165,7 +165,7 @@
 	</target>	
 	
 	
-	<target name="build-backend-war" depends="compile-backend, compress-repository-javascript, generate-version-file-backend" >
+	<target name="build-backend-war" depends="compile-backend, compress-repository-javascript" >
 		<!-- Add Hibernate xml files to the binary classes dir -->
 		<copy file="${config-dir}/hibernate.cfg.xml" todir="${bin-dir}" />
 		<copy file="${data-dir}/Access.hbm.xml" todir="${bin-dir}" />
@@ -216,30 +216,55 @@
 	
     <!-- Database targets ****************************************************** -->
     <target name="create-db">
+	    <exec executable="${postgresql-bin-dir}/createuser">
+            <arg value="--echo" />
+            <arg value="--superuser" />
+            <arg value="--createdb" />
+            <arg value="--no-password" />
+            <arg value="--host=${postgresql-hostname}" />
+            <arg value="--port=${postgresql-port}" />
+            <arg value="${postgresql-username}" />
+        </exec>
         <exec executable="${postgresql-bin-dir}/createdb">
             <arg value="--echo" />
             <arg value="--host=${postgresql-hostname}" />
             <arg value="--username=${postgresql-username}" />
             <arg value="--port=${postgresql-port}" />
-            <arg value="--owner=poem" />
+            <arg value="--owner=${postgresql-username}" />
+            <arg value="poem" />
+        </exec>
+		<exec executable="${postgresql-bin-dir}/psql">
+            <arg value="--host=${postgresql-hostname}" />
+            <arg value="--username=${postgresql-username}" />
+            <arg value="--port=${postgresql-port}" />
+            <arg value="-c CREATE EXTENSION plpythonu;" />
             <arg value="poem" />
         </exec>
         <exec executable="${postgresql-bin-dir}/psql">
             <arg value="--host=${postgresql-hostname}" />
             <arg value="--username=${postgresql-username}" />
             <arg value="--port=${postgresql-port}" />
-            <arg value="--dbname=poem" />
             <arg value="--file=${data-dir}/database/db_schema.sql" />
+			<arg value="poem" />
         </exec>
     </target>
 
     <target name="drop-db">
         <exec executable="${postgresql-bin-dir}/dropdb">
             <arg value="--echo" />
+			<arg value="--if-exists" />
             <arg value="--host=${postgresql-hostname}" />
             <arg value="--username=${postgresql-username}" />
             <arg value="--port=${postgresql-port}" />
             <arg value="poem" />
+        </exec>
+		<exec executable="${postgresql-bin-dir}/dropuser">
+            <arg value="--echo" />
+            <arg value="--if-exists" />
+            <arg value="--no-password" />
+            <arg value="--host=${postgresql-hostname}" />
+            <arg value="--port=${postgresql-port}" />
+            <arg value="${postgresql-username}" />
         </exec>
     </target>
 
