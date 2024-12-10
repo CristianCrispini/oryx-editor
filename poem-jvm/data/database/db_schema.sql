@@ -17,11 +17,6 @@ SET escape_string_warning = off;
 -- Name: plpythonu; Type: PROCEDURAL LANGUAGE; Schema: -; Owner: poem
 --
 
-CREATE PROCEDURAL LANGUAGE plpythonu;
-
-
-ALTER PROCEDURAL LANGUAGE plpythonu OWNER TO poem;
-
 SET search_path = public, pg_catalog;
 
 --
