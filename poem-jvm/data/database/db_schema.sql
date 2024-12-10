@@ -12,10 +12,6 @@ SET escape_string_warning = off;
 -- Name: plpgsql; Type: PROCEDURAL LANGUAGE; Schema: -; Owner: poem
 --
 
-CREATE PROCEDURAL LANGUAGE plpgsql;
-
-
-ALTER PROCEDURAL LANGUAGE plpgsql OWNER TO poem;
 
 --
 -- Name: plpythonu; Type: PROCEDURAL LANGUAGE; Schema: -; Owner: poem
