@@ -35,11 +35,13 @@ RUN apt-get update && apt-get install -y \
     libxml2 \
     libxslt1.1 \
     python2.7 \
+    libpython2.7 \
     ca-certificates && \
     apt-get clean
 
-# Copy PostgreSQL binaries from builder stage
+# Copy PostgreSQL binaries and libraries from the builder stage
 COPY --from=builder /usr/local/ /usr/local/
+COPY --from=builder /usr/lib/x86_64-linux-gnu/libpython2.7.so.1.0 /usr/lib/x86_64-linux-gnu/
 
 # Add PostgreSQL binaries to PATH
 ENV PATH="/usr/local/pgsql/bin:$PATH"
