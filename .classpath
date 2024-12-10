@@ -37,6 +37,7 @@
 	<classpathentry kind="lib" path="poem-jvm/lib/htmlparser-1.6.jar"/>
 	<classpathentry kind="lib" path="poem-jvm/lib/icu4j_3_4_1.jar"/>
 	<classpathentry kind="lib" path="poem-jvm/lib/jdom-1.0.jar"/>
+	<classpathentry kind="lib" path="poem-jvm/lib/javax.xml.ws-2.5.jar"/>
 	<classpathentry kind="lib" path="poem-jvm/lib/jsr107cache-1.0.jar"/>
 	<classpathentry kind="lib" path="poem-jvm/lib/jta-1_0_1B-classes.jar"/>
 	<classpathentry kind="lib" path="poem-jvm/lib/jta-1.0.1B.jar"/>

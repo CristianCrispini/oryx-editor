@@ -25,3 +25,23 @@ Current Roadmap
 * Add stencil-set for entity relationship models (ERM)
 * Extend stencil-set for event-driven process-chains (EPC) with additional elements
 * Fixing bugs
+
+TOMCAT8!
+* brew install tomcat@8
+  /opt/homebrew/etc/tomcat
+  /opt/homebrew/etc/tomcat/Catalina
+  /opt/homebrew/etc/tomcat/Catalina/localhost
+  /opt/homebrew/etc/tomcat/catalina.policy
+  /opt/homebrew/etc/tomcat/catalina.properties
+  /opt/homebrew/etc/tomcat/context.xml
+  /opt/homebrew/etc/tomcat/jaspic-providers.xml
+  /opt/homebrew/etc/tomcat/jaspic-providers.xsd
+  /opt/homebrew/etc/tomcat/logging.properties
+  /opt/homebrew/etc/tomcat/server.xml
+  /opt/homebrew/etc/tomcat/tomcat-users.xml
+  /opt/homebrew/etc/tomcat/tomcat-users.xsd
+  /opt/homebrew/etc/tomcat/web.xml
+
+  docker run --name poem-plpython  -p 5432:5432 -e POSTGRES_HOST_AUTH_METHOD=trust \
+    -v pgdata:/var/lib/postgresql/data \
+    postgres-python2
